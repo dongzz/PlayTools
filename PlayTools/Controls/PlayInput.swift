@@ -61,6 +61,8 @@ class PlayInput {
         } else {
             GCKeyboard.coalesced!.keyboardInput!.keyChangedHandler = nil
             GCController.current?.extendedGamepad?.valueChangedHandler = nil
+            self.invalidate()
+            self.setup()
         }
     }
 
@@ -110,6 +112,7 @@ class PlayInput {
             } else {
                 self.setup()
                 self.isEdit = false
+                AKInterface.shared!.setCursor()
                 Toast.showOver(msg: "edit close")
             }
         }
@@ -173,8 +176,9 @@ class PlayInput {
         }
 
         setupShortcuts()
-
-        AKInterface.shared!.setCursor()
+        PlayCover.delay(3.0) {
+            AKInterface.shared!.setCursor()
+        }
         // Fix beep sound
         AKInterface.shared!
             .eliminateRedundantKeyPressEvents(self.dontIgnore)

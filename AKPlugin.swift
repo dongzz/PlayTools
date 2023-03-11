@@ -38,12 +38,22 @@ class AKPlugin: NSObject, Plugin {
     }
 
     func setCursor() {
-        if let customImg = NSImage(named: "cur") {
-            customImg.size.width = 30
-            customImg.size.height = 30
-            NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
-        } else {
-            NSCursor.pointingHand.set()
+        let cursor = NSCursor.current
+        if cursor != .arrow {
+            return
+        }
+        if let view = NSApplication.shared.mainWindow?.contentView {
+            let mouseLocation = view.window?.mouseLocationOutsideOfEventStream ?? .zero
+            let mouseInView = view.convert(mouseLocation, from: nil)
+            if view.bounds.contains(mouseInView) {
+                if let customImg = NSImage(named: "cur") {
+                    NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
+                } else {
+                    NSCursor.pointingHand.set()
+                }
+            } else {
+                NSCursor.arrow.set()
+            }
         }
     }
 
@@ -54,6 +64,11 @@ class AKPlugin: NSObject, Plugin {
 
     func unhideCursor() {
         NSCursor.unhide()
+        if let customImg = NSImage(named: "cur") {
+            NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
+        } else {
+            NSCursor.pointingHand.set()
+        }
         CGAssociateMouseAndMouseCursorPosition(1)
     }
 
@@ -120,7 +135,11 @@ class AKPlugin: NSObject, Plugin {
         NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.mouseEntered, handler: { event in
             let consumed = onEntered()
             if consumed {
-                self.setCursor()
+                if let customImg = NSImage(named: "cur") {
+                    NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
+                } else {
+                    NSCursor.pointingHand.set()
+                }
                 return nil
             }
             return event
