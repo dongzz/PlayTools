@@ -21,16 +21,27 @@ public class PlayMice: Action {
             }
             PlayInput.touchQueue.async(qos: .userInteractive, execute: {
                 self.handleMouseMoved(deltaX: deltaX, deltaY: deltaY)
+                AKInterface.shared!.setCursor()
             })
             return true
         })
         AKInterface.shared!.setupScrollWheel({deltaX, deltaY in
             if let cameraScale = PlayInput.cameraScaleHandler[PlayMice.elementName] {
-                cameraScale(deltaX, deltaY)
+                let sensy = CGFloat(PlaySettings.shared.sensitivity * 0.6)
+                let cgDx = CGFloat(deltaX) * sensy,
+                    cgDy = CGFloat(deltaY) * sensy
+                cameraScale(cgDx, cgDy)
                 let eventConsumed = !mode.visible
                 return eventConsumed
             }
             return false
+        })
+
+        AKInterface.shared!.setupMouseEntered({() in
+            return true
+        })
+        AKInterface.shared!.setupMouseExited({() in
+            return true
         })
     }
 

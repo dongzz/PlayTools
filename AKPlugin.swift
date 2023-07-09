@@ -39,6 +39,26 @@ class AKPlugin: NSObject, Plugin {
 
     var cmdPressed: Bool = false
 
+    func setCursor() {
+        let cursor = NSCursor.current
+        if cursor != .arrow {
+            return
+        }
+        if let view = NSApplication.shared.mainWindow?.contentView {
+            let mouseLocation = view.window?.mouseLocationOutsideOfEventStream ?? .zero
+            let mouseInView = view.convert(mouseLocation, from: nil)
+            if view.bounds.contains(mouseInView) {
+                if let customImg = NSImage(named: "cur") {
+                    NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
+                } else {
+                    NSCursor.pointingHand.set()
+                }
+            } else {
+                NSCursor.arrow.set()
+            }
+        }
+    }
+
     func hideCursor() {
         NSCursor.hide()
         CGAssociateMouseAndMouseCursorPosition(0)
@@ -54,6 +74,11 @@ class AKPlugin: NSObject, Plugin {
 
     func unhideCursor() {
         NSCursor.unhide()
+        if let customImg = NSImage(named: "cur") {
+            NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
+        } else {
+            NSCursor.pointingHand.set()
+        }
         CGAssociateMouseAndMouseCursorPosition(1)
     }
 
@@ -130,6 +155,32 @@ class AKPlugin: NSObject, Plugin {
         })
     }
 
+    func setupMouseEntered(_ onEntered: @escaping() -> Bool) {
+        NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.mouseEntered, handler: { event in
+            let consumed = onEntered()
+            if consumed {
+                if let customImg = NSImage(named: "cur") {
+                    NSCursor.init(image: customImg, hotSpot: NSPoint(x: 0, y: 0)).set()
+                } else {
+                    NSCursor.pointingHand.set()
+                }
+                return nil
+            }
+            return event
+        })
+    }
+
+    func setupMouseExited(_ onExited: @escaping() -> Bool) {
+        NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.mouseExited, handler: { event in
+            let consumed = onExited()
+            if consumed {
+                NSCursor.arrow.set()
+                return nil
+            }
+            return event
+        })
+    }
+
     func setupMouseButton(left: Bool, right: Bool, _ dontIgnore: @escaping(Bool) -> Bool) {
         let downType: NSEvent.EventTypeMask = left ? .leftMouseDown : right ? .rightMouseDown : .otherMouseDown
         let upType: NSEvent.EventTypeMask = left ? .leftMouseUp : right ? .rightMouseUp : .otherMouseUp
@@ -155,8 +206,8 @@ class AKPlugin: NSObject, Plugin {
         NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.scrollWheel, handler: { event in
             var deltaX = event.scrollingDeltaX, deltaY = event.scrollingDeltaY
             if !event.hasPreciseScrollingDeltas {
-                deltaX *= 16
-                deltaY *= 16
+                deltaX *= 8
+                deltaY *= 8
             }
             let consumed = onMoved(deltaX, deltaY)
             if consumed {
